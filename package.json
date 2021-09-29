@@ -32,9 +32,9 @@
     "scripts": {
         "test:testnet": "yarn test:testnet:ci --verbose",
         "clean:accounts": "ts-node packages/js/scripts/delete-accounts.ts",
-        "test:testnet:ci": "yarn build && NEAR_RUNNER_NETWORK=testnet ava",
+        "test:testnet:ci": "yarn build:contracts && NEAR_RUNNER_NETWORK=testnet ava",
         "test:sandbox": "yarn test:sandbox:ci --verbose",
-        "test:sandbox:ci": "yarn build && ava",
+        "test:sandbox:ci": "yarn build:contracts && ava",
         "test": "yarn test:sandbox && yarn test:testnet",
         "hoist-credentials": "mkdir ./neardev/testnet && mkdir ./neardev/mainnet && node ./utils/hoist-credentials.js",
         "test:deploy": "yarn dev:deploy && yarn hoist-credentials && yarn test",

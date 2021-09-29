@@ -7,41 +7,18 @@
  * on testnet by using the `test:sandbox` and `test:testnet` scripts in
  * package.json.
  */
-import path from 'path';
-import {Runner} from 'near-runner-ava';
+ import { createRunner } from './utils';
 
-const runner = Runner.create(async ({root}) => ({
-  contract: await root.createAndDeploy(
-    'status-message',
-    path.join(__dirname, 'build', 'debug', 'status_message.wasm'),
-  ),
-  ali: await root.createAccount('ali'),
+ const runner = createRunner(async ({ root }) => ({
+  bob: await root.createAccount('bob'),
 }));
 
-runner.test('Root gets null status', async (t, {contract, root}) => {
-  const result = await contract.view('get_status', {
-    account_id: root,
-  });
-  t.is(result, null);
-});
-
-runner.test('Ali sets then gets status', async (t, {contract, ali}) => {
-  await ali.call(contract, 'set_status', {message: 'hello'});
-  const result: string = await contract.view('get_status', {
-    account_id: ali,
-  });
-  t.is(result, 'hello');
-});
-
-runner.test('Root and Ali have different statuses', async (t, {contract, root, ali}) => {
-  await root.call(contract, 'set_status', {message: 'world'});
-  const rootStatus: string = await contract.view('get_status', {
-    account_id: root,
-  });
-  t.is(rootStatus, 'world');
-
-  const aliStatus = await contract.view('get_status', {
-    account_id: ali,
-  });
-  t.is(aliStatus, null);
+runner.test('NFT enumerable tests (no tokens)', async (t, {nft, bob}) => {
+  const nft_supply_for_owner = await nft.view('nft_supply_for_owner', { account_id: bob });
+    t.is(nft_supply_for_owner, '0');
+		// messing around with index and limit
+		const bobTokens: any = await nft.view('nft_tokens_for_owner', {
+			account_id: bob, from_index: '1001', limit: 100
+		});
+    t.is(bobTokens.length, 0);
 });
