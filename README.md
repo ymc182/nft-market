@@ -40,8 +40,6 @@ Option (2/3) is the best UX and also allows your sale listings to be the most ac
 High level diagram of NFT sale on Market using Fungible Token:
 ![image](https://user-images.githubusercontent.com/321340/113903355-bea71e80-9785-11eb-8ab3-9c2f0d23466f.png)
 
-Remove the FT steps for NEAR transfers (but nft_transfer_payout and resolve_purchase still the same).
-
 Differences from `nft-simple` NFT standard reference implementation:
 - anyone can mint an NFT
 - Optional token_type
@@ -51,14 +49,16 @@ Differences from `nft-simple` NFT standard reference implementation:
 
 ## Working
 
-**Frontend App Demo: `/test/app.test.js/`**
-- install, deploy, test `yarn && yarn test:deploy`
+**Frontend App Demo: `/src/`**
+- install dependencies and test `yarn && yarn test:deploy`
 - run app - `yarn start`
-
-**App Tests: `/test/app.test.js/`**
+ 
+**App Tests: `/test/app.test.js`**
 - install, deploy, test `yarn && yarn test:deploy`
 - if you update contracts - `yarn test:deploy`
 - if you update tests only - `yarn test`
+
+## 🚨🚨🚨 End of Warning 🚨🚨🚨
 
 # NFT Specific Notes
 
@@ -78,7 +78,7 @@ Older Walkthrough Videos:
 
 Some additional ideas around user onboarding:
 
-[![NEAR Protocol - NFT Launcher & Easy User Onboarding Demo - Hackathon Starter Kit!](https://img.youtube.com/vi/59Lzt1PFF6I/0.jpg)](https://www.youtube.com/watch?v=59Lzt1PFF6I)
+[![NEAR Protocol - NFT Launcher & Easy User Onboarding Demo - Hackathon Starter Kit!](https://img.youtube.com/vi/59Lzt1PFF6I/0.jpg)](https://www.youtube.com/watch?v=59Lzt1PFF6I)	
 
 # Detailed Installation / Quickstart
 
@@ -89,20 +89,21 @@ Install Rust https://rustup.rs/
 2. Create testnet account: [Wallet](https://wallet.testnet.near.org)
 3. Login: `near login`
 #### Installing and Running Tests for this Example
-1. Install everything: `yarn && (cd server && yarn)`
+1. Install everything: `yarn`
 2. Deploy the contract and run the app tests: `yarn test:deploy`
-3. (WIP) Start server and run server tests: `cd server && yarn start` then in another terminal from the root `yarn test:server`
 
 #### Notes
-- If you ONLY change the JS tests use `yarn test`.
+- If you ONLY change the code in the JS tests, use `yarn test`.
 - If you change the contract run `yarn test:deploy` again.
 - If you run out of funds in the dev account run `yarn test:deploy` again.
 - If you change the dev account (yarn test:deploy) the server should restart automatically, but you may need to restart the app and sign out/in again with NEAR Wallet.
+
 ### Moar Context
 
 There's 3 main areas to explore:
-- frontend app - shows how to create guest accounts that are added to the app contract via the nodejs server. Guests can mind NFTs, put them up for sale and earn NEAR tokens. When the guest has NEAR they can upgrade their account to a full account.
-- app.test.js (demos frontend only tests)
+- contracts - shows how to create a simple NFT marketplace where you can mint tokens and put them for sale so they can be bought.
+- frontend app - shows how to create a simple NFT marketplace where you can mint tokens and put them for sale so they can be bought.
+- app.test.js - code that is used to test different interactions with the smart contracts.
 
 ### Owner Account, Token Account, etc...
 
@@ -110,66 +111,11 @@ The tests are set up to auto generate the dev account each time you run `test:de
 
 This is just for testing. You can obviously deploy a token to a fixed address on testnet / mainnet, it's an easy config update.
 
-#### Guests Account (key and tx gas sponsorship)
-When you run app / server tests. There's a contract deployed and a special account created `guests.OWNER_ACCOUNT_ID` to manage the sponsored users (the ones you will pay for gas fees while onboarding). This special "guests" account is different from the test guest account `bob.TOKEN_ID.OWNER_ACCOUNT_ID`. It is an account, different from the owner or token accounts, that manages the guests keys.
-
-#### Guest Accounts
-The guest users can `claim_drop, ft_transfer_guest` and receive tokens from other users, e.g. in the server tests the owner transfers tokens to the guest account via API call and using client side code.
-
-Then, following the server tests, the guest transfers tokens to alice (who is a real NEAR account e.g. she pays her own gas).
-
-Finally, the guest upgrades themselves to a real NEAR account, something demoed in the video.
-
-It's a lot to digest but if you focus on the `/test/app.test.js` you will start to see the patterns.
-# Background
-
-One of the issues with onboarding new users to crypto is that they need to have crypto to do anything e.g. mint an NFT. A creator, artist or community might want to drop a bunch of free minting options to their fans for them to mint user generated content, but the audience has (1) no crypto to pay for fees (2) no wallet (3) no concept of crypto or blockchain; prior to the drop. 
-
-So let's solve these issues by allowing users to generate content the traditional Web2 way!
-
-We do a demo of creating a "guest" named account for an app where the gas fees are sponsored by a special app account called "guests.APP_NAME.near". The guest account doesn't exist (sometimes called a virtual or contract account) until the user creates and sells and NFT that generates some NEAR tokens and then they can upgrade to a real account. Until then their name is reserved because only the app is able to create "USERNAME.APP_NAME.near".
-
-This has many advantages for user onboarding, where users can use the app immediately and later can be upgraded to a full account. The users also don't have to move any assets - namely the fungible tokens they earned as a guest user. 
-
-## Installation
-
-Beyond having npm and node (latest versions), you should have Rust installed. I recommend nightly because living on the edge is fun.
-
-https://rustup.rs/
-
-### Don't forget to install the wasm32 target:
-
-`rustup target add wasm32-unknown-unknown`
-
-Also recommend installing near-cli globally
-
-`npm i -g near-cli`
-
-Everything else can be installed via:
-`yarn`
-`cd server && yarn`
-
 ## NEAR Config
 
 There is only one config.js file found in `src/config.js`, this is also used for running tests.
 
 Using `src/config.js` you can set up your different environments. Use `REACT_APP_ENV` to switch environments e.g. in `package.json` script `deploy`.
-
-## Running Tests
-
-You can run unit tests in the Rust contracts themselves, but it may be more useful to JS tests against testnet itself.
-
-Note: to run the app and server tests make sure you install and start the server.
-- cd server
-- yarn && yarn start
-
-Commands:
-- `test` will simply run app tests against the contract already deployed. You can mess around with `app.test.js` and try different frontend stuff
-- `test:deploy` - will deploy a new dev account (`/neardev`) and deploy a new contract to this account, then run `test`
-- `test:server` - will test the server, make sure you start it (see "Note" above)
-- `test:unit` - runs the rust unit tests
-
-If you've changed your contract or your dev account has run out of funds use `test:deploy`, if you're updating your JS tests only then use `test`.
 
 ## Test Utils
 
@@ -342,6 +288,3 @@ When the button is clicked, the component HelloMessage will not re-render, it's 
 Reference:
 - https://reactjs.org/docs/context.html
 - https://dmitripavlutin.com/use-react-memo-wisely/
-
-
-
