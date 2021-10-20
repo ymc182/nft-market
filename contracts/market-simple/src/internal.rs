@@ -7,37 +7,6 @@ pub(crate) fn hash_account_id(account_id: &AccountId) -> CryptoHash {
 }
 
 impl Contract {
-    pub(crate) fn assert_owner(&self) {
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.owner_id,
-            "Owner's method"
-        );
-    }
-
-    /// refund the last bid of each token type, don't update sale because it's already been removed
-
-    pub(crate) fn refund_all_bids(
-        &mut self,
-        bids: &Bids,
-    ) {
-        for (bid_ft, bid_vec) in bids {
-            let bid = &bid_vec[bid_vec.len()-1];
-            if bid_ft == "near" {
-                    Promise::new(bid.owner_id.clone()).transfer(u128::from(bid.price));
-            } else {
-                ext_contract::ft_transfer(
-                    bid.owner_id.clone(),
-                    bid.price,
-                    None,
-                    bid_ft,
-                    1,
-                    GAS_FOR_FT_TRANSFER,
-                );
-            }
-        }
-    }
-
     pub(crate) fn internal_remove_sale(
         &mut self,
         nft_contract_id: AccountId,
@@ -64,17 +33,6 @@ impl Contract {
         } else {
             self.by_nft_contract_id
                 .insert(&nft_contract_id, &by_nft_contract_id);
-        }
-
-        let token_type = sale.token_type.clone();
-        if let Some(token_type) = token_type {
-            let mut by_nft_token_type = self.by_nft_token_type.get(&token_type).expect("No sale by nft_token_type");
-            by_nft_token_type.remove(&contract_and_token_id);
-            if by_nft_token_type.is_empty() {
-                self.by_nft_token_type.remove(&token_type);
-            } else {
-                self.by_nft_token_type.insert(&token_type, &by_nft_token_type);
-            }
         }
 
         sale

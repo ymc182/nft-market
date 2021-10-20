@@ -78,40 +78,6 @@ impl Contract {
         tmp
     }
 
-    pub fn get_supply_by_nft_token_type(
-        &self,
-        token_type: String,
-    ) -> U64 {
-        let by_nft_token_type = self.by_nft_token_type.get(&token_type);
-        if let Some(by_nft_token_type) = by_nft_token_type {
-            U64(by_nft_token_type.len())
-        } else {
-            U64(0)
-        }
-    }
-
-    pub fn get_sales_by_nft_token_type(
-        &self,
-        token_type: String,
-        from_index: U64,
-        limit: u64,
-    ) -> Vec<Sale> {
-        let mut tmp = vec![];
-        let by_nft_token_type = self.by_nft_token_type.get(&token_type);
-        let sales = if let Some(by_nft_token_type) = by_nft_token_type {
-            by_nft_token_type
-        } else {
-            return vec![];
-        };
-        let keys = sales.as_vector();
-        let start = u64::from(from_index);
-        let end = min(start + limit, sales.len());
-        for i in start..end {
-            tmp.push(self.sales.get(&keys.get(i).unwrap()).unwrap());
-        }
-        tmp
-    }
-
     pub fn get_sale(&self, nft_contract_token: ContractAndTokenId) -> Option<Sale> {
         self.sales.get(&nft_contract_token)
     }

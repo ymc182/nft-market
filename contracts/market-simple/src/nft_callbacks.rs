@@ -5,10 +5,7 @@ use crate::*;
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct SaleArgs {
-    pub sale_conditions: SaleConditions,
-    pub token_type: TokenType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_auction: Option<bool>,
+    pub sale_conditions: SalePriceInNear,
 }
 
 trait NonFungibleTokenApprovalsReceiver {
@@ -49,7 +46,7 @@ impl NonFungibleTokenApprovalsReceiver for Contract {
 
         // enforce signer's storage is enough to cover + 1 more sale 
 
-        let storage_amount = self.storage_amount().0;
+        let storage_amount = self.storage_minimum_balance().0;
         let owner_paid_storage = self.storage_deposits.get(&signer_id).unwrap_or(0);
         let signer_storage_required = (self.get_supply_by_owner_id(signer_id).0 + 1) as u128 * storage_amount;
         assert!(
@@ -58,21 +55,8 @@ impl NonFungibleTokenApprovalsReceiver for Contract {
             owner_paid_storage, signer_storage_required / STORAGE_PER_SALE, STORAGE_PER_SALE
         );
 
-        let SaleArgs { sale_conditions, token_type, is_auction } =
+        let SaleArgs { sale_conditions } =
             near_sdk::serde_json::from_str(&msg).expect("Not valid SaleArgs");
-
-        
-        for (ft_token_id, _price) in sale_conditions.clone() {
-            if !self.ft_token_ids.contains(&ft_token_id) {
-                env::panic(
-                    format!("Token {} not supported by this market", ft_token_id).as_bytes(),
-                );
-            }
-        }
-
-        // env::log(format!("add_sale for owner: {}", &owner_id).as_bytes());
-
-        let bids = HashMap::new();
 
         let contract_and_token_id = format!("{}{}{}", nft_contract_id, DELIMETER, token_id);
         self.sales.insert(
@@ -83,10 +67,7 @@ impl NonFungibleTokenApprovalsReceiver for Contract {
                 nft_contract_id: nft_contract_id.clone(),
                 token_id: token_id.clone(),
                 sale_conditions,
-                bids,
                 created_at: U64(env::block_timestamp()/1000000),
-                token_type: token_type.clone(),
-                is_auction: is_auction.unwrap_or(false),
             },
         );
 
@@ -125,24 +106,5 @@ impl NonFungibleTokenApprovalsReceiver for Contract {
         by_nft_contract_id.insert(&token_id);
         self.by_nft_contract_id
             .insert(&nft_contract_id, &by_nft_contract_id);
-
-        if let Some(token_type) = token_type {
-            assert!(token_id.contains(&token_type), "TokenType should be substr of TokenId");
-            let mut by_nft_token_type = self
-                .by_nft_token_type
-                .get(&token_type)
-                .unwrap_or_else(|| {
-                    UnorderedSet::new(
-                        StorageKey::ByNFTTokenTypeInner {
-                            token_type_hash: hash_account_id(&token_type),
-                        }
-                        .try_to_vec()
-                        .unwrap(),
-                    )
-                });
-                by_nft_token_type.insert(&contract_and_token_id);
-            self.by_nft_token_type
-                .insert(&token_type, &by_nft_token_type);
-        }
     }
 }
