@@ -6,7 +6,7 @@ use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, UnorderedSet};
 use near_sdk::json_types::{Base64VecU8, ValidAccountId, U64, U128};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    env, near_bindgen, AccountId, Balance, CryptoHash, PanicOnDefault, Promise, PromiseOrValue, StorageUsage,
+    env, near_bindgen, AccountId, Balance, CryptoHash, PanicOnDefault, Promise, PromiseOrValue,
 };
 
 use crate::internal::*;
@@ -42,9 +42,6 @@ pub struct Contract {
 
     pub owner_id: AccountId,
 
-    /// The storage size in bytes for one account.
-    pub extra_storage_in_bytes_per_token: StorageUsage,
-
     pub metadata: LazyOption<NFTMetadata>,
 
     /// CUSTOM fields
@@ -78,7 +75,6 @@ impl Contract {
                 StorageKey::TokenMetadataById.try_to_vec().unwrap(),
             ),
             owner_id: owner_id.into(),
-            extra_storage_in_bytes_per_token: 0,
             metadata: LazyOption::new(
                 StorageKey::NftMetadata.try_to_vec().unwrap(),
                 Some(&metadata),
@@ -96,30 +92,7 @@ impl Contract {
             }
         }
 
-        this.measure_min_token_storage_cost();
-
         this
-    }
-
-    fn measure_min_token_storage_cost(&mut self) {
-        let initial_storage_usage = env::storage_usage();
-        let tmp_account_id = "a".repeat(64);
-        let u = UnorderedSet::new(
-            StorageKey::TokenPerOwnerInner {
-                account_id_hash: hash_account_id(&tmp_account_id),
-            }
-            .try_to_vec()
-            .unwrap(),
-        );
-        self.tokens_per_owner.insert(&tmp_account_id, &u);
-
-        let tokens_per_owner_entry_in_bytes = env::storage_usage() - initial_storage_usage;
-        let owner_id_extra_cost_in_bytes = (tmp_account_id.len() - self.owner_id.len()) as u64;
-
-        self.extra_storage_in_bytes_per_token =
-            tokens_per_owner_entry_in_bytes + owner_id_extra_cost_in_bytes;
-
-        self.tokens_per_owner.remove(&tmp_account_id);
     }
 
     /// CUSTOM - setters for owner

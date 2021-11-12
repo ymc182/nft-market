@@ -74,9 +74,7 @@ impl Contract {
         self.token_metadata_by_id.insert(&final_token_id, &metadata);
         self.internal_add_token_to_owner(&token.owner_id, &final_token_id);
 
-        let new_token_size_in_bytes = env::storage_usage() - initial_storage_usage;
-        let required_storage_in_bytes =
-            self.extra_storage_in_bytes_per_token + new_token_size_in_bytes;
+        let required_storage_in_bytes = env::storage_usage() - initial_storage_usage;
 
         refund_deposit(required_storage_in_bytes);
     }
