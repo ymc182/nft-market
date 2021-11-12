@@ -318,7 +318,7 @@ impl NonFungibleTokenCore for Contract {
 			if let Some(approval_id) = approval_id {
 				approval_id == *approval
 			} else {
-				false
+				true
 			}
 		} else {
 			false
